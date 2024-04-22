@@ -1,5 +1,5 @@
 _base_ = ('../../third_party/mmyolo/configs/yolov8/'
-          'yolov8_l_syncbn_fast_8xb16-500e_coco.py')
+          'yolov8_x_syncbn_fast_8xb16-500e_coco.py')
 custom_imports = dict(imports=['yolo_world'],
                       allow_failed_imports=False)
 
@@ -15,6 +15,18 @@ neck_num_heads = [4, 8, _base_.last_stage_out_channels // 2 // 32]
 base_lr = 2e-3
 weight_decay = 0.05 / 2
 train_batch_size_per_gpu = 16
+text_model_name = '../pretrained_models/clip-vit-base-patch32-projection'
+# text_model_name = 'openai/clip-vit-base-patch32'
+
+# scaling model from X to XL
+deepen_factor = 1.0
+widen_factor = 1.5
+
+backbone = _base_.model.backbone
+backbone.update(
+    deepen_factor=deepen_factor,
+    widen_factor=widen_factor
+)
 
 # model settings
 model = dict(
@@ -26,21 +38,22 @@ model = dict(
     backbone=dict(
         _delete_=True,
         type='MultiModalYOLOBackbone',
-        image_model={{_base_.model.backbone}},
+        image_model=backbone,
         text_model=dict(
             type='HuggingCLIPLanguageBackbone',
-            model_name='openai/clip-vit-base-patch32',
+            model_name=text_model_name,
             frozen_modules=['all'])),
-    neck=dict(type='YOLOWolrdDualPAFPN',
+    neck=dict(type='YOLOWorldPAFPN',
+              deepen_factor=deepen_factor,
+              widen_factor=widen_factor,
               guide_channels=text_channels,
               embed_channels=neck_embed_channels,
               num_heads=neck_num_heads,
-              block_cfg=dict(type='MaxSigmoidCSPLayerWithTwoConv'),
-              text_enhancder=dict(type='ImagePoolingAttentionModule',
-                                  embed_channels=256,
-                                  num_heads=8)),
+              block_cfg=dict(type='MaxSigmoidCSPLayerWithTwoConv')),
     bbox_head=dict(type='YOLOWorldHead',
                    head_module=dict(type='YOLOWorldHeadModule',
+                                    widen_factor=widen_factor,
+                                    use_bn_head=True,
                                     embed_dims=text_channels,
                                     num_classes=num_training_classes)),
     train_cfg=dict(assigner=dict(num_classes=num_training_classes)))

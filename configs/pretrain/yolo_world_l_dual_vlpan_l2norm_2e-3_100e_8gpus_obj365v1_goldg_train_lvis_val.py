@@ -29,7 +29,8 @@ model = dict(
         image_model={{_base_.model.backbone}},
         text_model=dict(
             type='HuggingCLIPLanguageBackbone',
-            model_name='/root/jinyfeng/models/LLaVa/openai/clip-vit-large-patch14',
+            # model_name='/root/jinyfeng/models/LLaVa/openai/clip-vit-large-patch14',
+            model_name='/root/jinyfeng/models/LLaVa/openai/clip-vit-base-patch32',
             frozen_modules=['all'])),
     neck=dict(type='YOLOWolrdDualPAFPN',
               guide_channels=text_channels,

@@ -40,7 +40,7 @@ model = dict(
             type='HuggingCLIPLanguageBackbone',
             model_name='openai/clip-vit-base-patch32',
             frozen_modules=[])),
-    neck=dict(type='YOLOWolrdDualPAFPN',
+    neck=dict(type='YOLOWorldDualPAFPN',
               guide_channels=text_channels,
               embed_channels=neck_embed_channels,
               num_heads=neck_num_heads,
@@ -151,7 +151,7 @@ coco_train_dataset = dict(
                  ann_file='lvis/lvis_v1_train_base.json',
                  data_prefix=dict(img=''),
                  filter_cfg=dict(filter_empty_gt=True, min_size=32)),
-    class_text_path='data/captions/lvis_v1_base_class_captions.json',
+    class_text_path='data/texts/lvis_v1_base_class_texts.json',
     pipeline=train_pipeline)
 train_dataloader = dict(persistent_workers=persistent_workers,
                         batch_size=train_batch_size_per_gpu,

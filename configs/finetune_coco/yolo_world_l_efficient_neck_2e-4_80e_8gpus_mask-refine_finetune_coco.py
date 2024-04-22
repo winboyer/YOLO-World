@@ -15,6 +15,8 @@ base_lr = 2e-4
 weight_decay = 0.05
 train_batch_size_per_gpu = 16
 load_from = 'pretrained_models/yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth'
+# huggingface text model
+text_model_name = 'openai/clip-vit-base-patch32'
 persistent_workers = False
 
 # model settings
@@ -30,7 +32,7 @@ model = dict(
         image_model={{_base_.model.backbone}},
         text_model=dict(
             type='HuggingCLIPLanguageBackbone',
-            model_name='openai/clip-vit-base-patch32',
+            model_name=text_model_name,
             frozen_modules=['all'])),
     neck=dict(type='YOLOWorldPAFPN',
               guide_channels=text_channels,
@@ -137,21 +139,17 @@ train_cfg = dict(max_epochs=max_epochs,
                  val_interval=5,
                  dynamic_intervals=[((max_epochs - close_mosaic_epochs),
                                      _base_.val_interval_stage2)])
-optim_wrapper = dict(optimizer=dict(
-    _delete_=True,
-    type='AdamW',
-    lr=base_lr,
-    weight_decay=weight_decay,
-    batch_size_per_gpu=train_batch_size_per_gpu),
-                     paramwise_cfg=dict(bias_decay_mult=0.0,
-                                        norm_decay_mult=0.0,
-                                        custom_keys={
-                                            'backbone.text_model':
-                                            dict(lr_mult=0.01),
-                                            'logit_scale':
-                                            dict(weight_decay=0.0)
-                                        }),
-                     constructor='YOLOWv5OptimizerConstructor')
+optim_wrapper = dict(
+    optimizer=dict(
+        _delete_=True,
+        type='AdamW',
+        lr=base_lr,
+        weight_decay=weight_decay,
+        batch_size_per_gpu=train_batch_size_per_gpu),
+    paramwise_cfg=dict(
+        custom_keys={'backbone.text_model': dict(lr_mult=0.01),
+                     'logit_scale': dict(weight_decay=0.0)}),
+    constructor='YOLOWv5OptimizerConstructor')
 
 # evaluation settings
 val_evaluator = dict(_delete_=True,
